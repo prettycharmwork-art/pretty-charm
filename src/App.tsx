@@ -64,6 +64,7 @@ import {
   maskCustomerEmail,
   canOrderReviewProduct,
 } from './shared/domainLogic';
+import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from './shared/fallbackData';
 import { ARTWORK } from './assets/productArtwork';
 import { PWAInstallButton, OfflineIndicator } from './components/PWAInstallBanner';
 import { ThreeHamperViewer } from './components/ThreeHamperViewer';
@@ -149,13 +150,13 @@ export default function App() {
   const [sortBy, setSortBy] = useState<ProductSortOption>('featured');
   const [showInStockOnly, setShowInStockOnly] = useState<boolean>(false);
 
-  // Storefront data from SQLite API (/api/storefront)
-  const [categories, setCategories] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  // Storefront data (initialized with full catalogue, refreshed from /api/storefront)
+  const [categories, setCategories] = useState<any[]>(FALLBACK_CATEGORIES);
+  const [products, setProducts] = useState<any[]>(FALLBACK_PRODUCTS);
   const [shippingRules, setShippingRules] = useState<ShippingRuleConfig>(DEFAULT_SHIPPING_RULES);
   const [generalSettings, setGeneralSettings] = useState<Record<string, any>>({});
   const [policies, setPolicies] = useState<Record<string, string>>({});
-  const [loadingCatalogue, setLoadingCatalogue] = useState<boolean>(true);
+  const [loadingCatalogue, setLoadingCatalogue] = useState<boolean>(false);
 
   // Local non-sensitive convenience state
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -317,8 +318,8 @@ export default function App() {
       const res = await fetch('/api/storefront');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load storefront');
-      setCategories(data.categories || []);
-      setProducts(data.products || []);
+      if (data.categories && data.categories.length > 0) setCategories(data.categories);
+      if (data.products && data.products.length > 0) setProducts(data.products);
       if (data.comboOffers) setComboOffers(data.comboOffers);
       if (data.shippingRules) setShippingRules(data.shippingRules);
       setGeneralSettings(data.generalSettings || {});
