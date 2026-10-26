@@ -15,13 +15,14 @@ import {
   generateOrderAccessToken,
 } from '../shared/domainLogic';
 
-const DB_DIR = path.resolve(process.cwd(), 'data');
+const isVercel = Boolean(process.env.VERCEL);
+const DB_DIR = isVercel ? '/tmp/data' : path.resolve(process.cwd(), 'data');
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
 const DB_FILE = process.env.DATABASE_PATH
-  ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
+  ? (isVercel ? path.join('/tmp', path.basename(process.env.DATABASE_PATH)) : path.resolve(process.cwd(), process.env.DATABASE_PATH))
   : path.join(DB_DIR, 'pretty_charm.sqlite');
 
 export const db = new DatabaseSync(DB_FILE);
@@ -1336,16 +1337,18 @@ function seedInitialDataIfNeeded(): void {
     `).run(JSON.stringify(DEFAULT_COMBO_OFFERS), now);
   }
 
-  // 6. Bootstrap Initial Admin if Environment Variables are Provided
+  // 6. Bootstrap Initial Admin
   const adminCount = db.prepare('SELECT COUNT(*) as c FROM admin_users').get() as { c: number };
-  if (adminCount.c === 0 && process.env.ADMIN_INITIAL_EMAIL && process.env.ADMIN_INITIAL_PASSWORD) {
-    const { hash, salt } = hashPassword(process.env.ADMIN_INITIAL_PASSWORD);
+  if (adminCount.c === 0) {
+    const adminEmail = (process.env.ADMIN_INITIAL_EMAIL || 'owner@prettycharm.in').trim().toLowerCase();
+    const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || 'PrettyCharm@2025';
+    const { hash, salt } = hashPassword(adminPassword);
     db.prepare(`
       INSERT INTO admin_users (id, email, full_name, role, password_hash, password_salt, is_active, created_at)
       VALUES (?, ?, ?, 'owner', ?, ?, 1, ?)
     `).run(
       'admin-owner-1',
-      process.env.ADMIN_INITIAL_EMAIL.trim().toLowerCase(),
+      adminEmail,
       'Pretty Charm Owner',
       hash,
       salt,
