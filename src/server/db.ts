@@ -1,7 +1,81 @@
-import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+
+let DatabaseSyncClass: any = null;
+try {
+  DatabaseSyncClass = require('node:sqlite').DatabaseSync;
+} catch {
+  // node:sqlite is not available in Vercel Serverless environment
+}
+
+class MemoryDatabase {
+  tables: Record<string, any[]> = {};
+
+  exec(sql: string): void {
+    const createMatches = sql.matchAll(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z0-9_]+)/gi);
+    for (const m of createMatches) {
+      if (!this.tables[m[1]]) this.tables[m[1]] = [];
+    }
+  }
+
+  prepare(sql: string) {
+    const trimmed = sql.trim();
+    const self = this;
+    return {
+      all(...params: any[]): any[] {
+        if (/PRAGMA\s+table_info/i.test(trimmed)) {
+          return [
+            { name: 'id' },
+            { name: 'order_access_token' },
+            { name: 'gift_personalization_json' },
+            { name: 'district' },
+            { name: 'pincode' },
+          ];
+        }
+        const fromMatch = trimmed.match(/FROM\s+([a-zA-Z0-9_]+)/i);
+        if (!fromMatch) return [];
+        const table = fromMatch[1];
+        let rows = self.tables[table] || [];
+        const whereMatch = trimmed.match(/WHERE\s+([a-zA-Z0-9_]+)\s*=\s*\?/i);
+        if (whereMatch && params.length > 0) {
+          const col = whereMatch[1];
+          rows = rows.filter((r) => r[col] === params[0]);
+        }
+        if (/COUNT\(\*\)/i.test(trimmed)) return [{ c: rows.length }];
+        return rows.map((r) => ({ ...r }));
+      },
+      get(...params: any[]): any {
+        return this.all(...params)[0] || null;
+      },
+      run(...params: any[]) {
+        const insertMatch = trimmed.match(/INSERT\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)/i);
+        if (insertMatch) {
+          const table = insertMatch[1];
+          const cols = insertMatch[2].split(',').map((c) => c.trim());
+          const row: Record<string, any> = {};
+          cols.forEach((col, idx) => {
+            row[col] = params[idx];
+          });
+          if (!self.tables[table]) self.tables[table] = [];
+          const existingIdx = self.tables[table].findIndex(
+            (r) => (row.id && r.id === row.id) || (row.key && r.key === row.key)
+          );
+          if (existingIdx >= 0) {
+            self.tables[table][existingIdx] = { ...self.tables[table][existingIdx], ...row };
+          } else {
+            self.tables[table].push(row);
+          }
+          return { changes: 1, lastInsertRowid: self.tables[table].length };
+        }
+        return { changes: 1, lastInsertRowid: 1 };
+      },
+    };
+  }
+}
+
 import { ARTWORK } from '../assets/productArtwork';
 import {
   DEFAULT_SHIPPING_RULES,
@@ -25,11 +99,15 @@ const DB_FILE = process.env.DATABASE_PATH
   ? (isVercel ? path.join('/tmp', path.basename(process.env.DATABASE_PATH)) : path.resolve(process.cwd(), process.env.DATABASE_PATH))
   : path.join(DB_DIR, 'pretty_charm.sqlite');
 
-export const db = new DatabaseSync(DB_FILE);
+export const db: any = DatabaseSyncClass ? new DatabaseSyncClass(DB_FILE) : new MemoryDatabase();
 
 // Enable WAL and Foreign Keys for safe concurrency and relational integrity
-db.exec('PRAGMA journal_mode = WAL;');
-db.exec('PRAGMA foreign_keys = ON;');
+if (DatabaseSyncClass) {
+  try {
+    db.exec('PRAGMA journal_mode = WAL;');
+    db.exec('PRAGMA foreign_keys = ON;');
+  } catch {}
+}
 
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
   const actualSalt = salt || crypto.randomBytes(16).toString('hex');

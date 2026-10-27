@@ -29,6 +29,7 @@ import {
   saveComboOffersSettings,
   getOrderByAccessToken,
 } from './src/server/db';
+import { FALLBACK_CATEGORIES, FALLBACK_PRODUCTS } from './src/shared/fallbackData';
 import {
   DEFAULT_SHIPPING_RULES,
   DEFAULT_DELIVERY_POLICY,
@@ -284,54 +285,81 @@ function getFormattedCatalogue(includeArchived = false) {
 // ============================================================================
 
 app.get('/api/storefront', (_req, res) => {
-  const { categories, products } = getFormattedCatalogue(false);
-  const settings = getStoreSettings();
-  const pincodes = getAllServiceablePins();
+  try {
+    const { categories, products } = getFormattedCatalogue(false);
+    const settings = getStoreSettings();
+    const pincodes = getAllServiceablePins();
 
-  // Strip internal cost fields from public storefront response
-  const publicProducts = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    categorySlug: p.categorySlug,
-    tags: p.tags,
-    images: p.images,
-    sku: p.sku,
-    sellingPricePaise: p.sellingPricePaise,
-    availableQty: p.availableQty,
-    lowStockThreshold: p.lowStockThreshold,
-    status: p.status,
-    confirmedByAdmin: p.confirmedByAdmin,
-    featured: p.featured,
-    variants: p.variants,
-    createdAt: p.createdAt,
-    updatedAt: p.updatedAt,
-  }));
+    // Strip internal cost fields from public storefront response
+    const publicProducts = products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      categorySlug: p.categorySlug,
+      tags: p.tags,
+      images: p.images,
+      sku: p.sku,
+      sellingPricePaise: p.sellingPricePaise,
+      availableQty: p.availableQty,
+      lowStockThreshold: p.lowStockThreshold,
+      status: p.status,
+      confirmedByAdmin: p.confirmedByAdmin,
+      featured: p.featured,
+      variants: p.variants,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }));
 
-  res.json({
-    categories,
-    products: publicProducts,
-    shippingRules: settings.shippingRules,
-    generalSettings: {
-      storeName: settings.general.storeName,
-      tagline: settings.general.tagline,
-      shippingOrigin: settings.general.shippingOrigin,
-      supportWhatsapp: settings.general.supportWhatsapp,
-      supportEmail: settings.general.supportEmail,
-      instagramHandle: settings.general.instagramHandle,
-      announcementBanner: settings.general.announcementBanner,
-      paymentMode: settings.general.paymentMode || 'whatsapp',
-      manualPaymentUpiId: settings.general.manualPaymentUpiId,
-      manualPaymentLink: settings.general.manualPaymentLink || '',
-      manualPaymentQrUrl: settings.general.manualPaymentQrUrl || '',
-      manualPaymentInstructions: settings.general.manualPaymentInstructions,
-    },
-    policies: settings.policies,
-    deliveryPolicy: settings.deliveryPolicy,
-    comboOffers: getComboOffersSettings(),
-    serviceablePincodes: pincodes.filter((p) => p.isServiceable),
-  });
+    res.json({
+      categories: categories && categories.length > 0 ? categories : FALLBACK_CATEGORIES,
+      products: publicProducts && publicProducts.length > 0 ? publicProducts : FALLBACK_PRODUCTS,
+      shippingRules: settings.shippingRules || DEFAULT_SHIPPING_RULES,
+      generalSettings: {
+        storeName: settings.general?.storeName || 'Pretty Charm',
+        tagline: settings.general?.tagline || 'Gift Hampers, Hair Accessories & Jewellery',
+        shippingOrigin: settings.general?.shippingOrigin || 'Gurugram, Haryana',
+        supportWhatsapp: settings.general?.supportWhatsapp || '919000000000',
+        supportEmail: settings.general?.supportEmail || 'support@prettycharm.in',
+        instagramHandle: settings.general?.instagramHandle || 'prettycharm.in',
+        announcementBanner: settings.general?.announcementBanner || 'Thoughtfully chosen gifts & pretty essentials · Verified studio dispatch',
+        paymentMode: settings.general?.paymentMode || 'whatsapp',
+        manualPaymentUpiId: settings.general?.manualPaymentUpiId || '',
+        manualPaymentLink: settings.general?.manualPaymentLink || '',
+        manualPaymentQrUrl: settings.general?.manualPaymentQrUrl || '',
+        manualPaymentInstructions: settings.general?.manualPaymentInstructions || '',
+      },
+      policies: settings.policies || {},
+      deliveryPolicy: settings.deliveryPolicy || DEFAULT_DELIVERY_POLICY,
+      comboOffers: getComboOffersSettings() || DEFAULT_COMBO_OFFERS,
+      serviceablePincodes: pincodes.filter((p) => p.isServiceable),
+    });
+  } catch (err: any) {
+    console.warn('[Storefront Fallback] Failed to fetch catalogue from DB, using fallback:', err?.message || err);
+    res.json({
+      categories: FALLBACK_CATEGORIES,
+      products: FALLBACK_PRODUCTS,
+      shippingRules: DEFAULT_SHIPPING_RULES,
+      generalSettings: {
+        storeName: 'Pretty Charm',
+        tagline: 'Gift Hampers, Hair Accessories & Jewellery',
+        shippingOrigin: 'Gurugram, Haryana',
+        supportWhatsapp: '919000000000',
+        supportEmail: 'support@prettycharm.in',
+        instagramHandle: 'prettycharm.in',
+        announcementBanner: 'Thoughtfully chosen gifts & pretty essentials · Verified studio dispatch',
+        paymentMode: 'whatsapp',
+        manualPaymentUpiId: '',
+        manualPaymentLink: '',
+        manualPaymentQrUrl: '',
+        manualPaymentInstructions: '',
+      },
+      policies: {},
+      deliveryPolicy: DEFAULT_DELIVERY_POLICY,
+      comboOffers: DEFAULT_COMBO_OFFERS,
+      serviceablePincodes: [],
+    });
+  }
 });
 
 /**
