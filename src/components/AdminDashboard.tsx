@@ -205,7 +205,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const res = await fetch(`/api/admin/overview${qs}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      const json = await res.json();
+      const text = await res.text();
+      let json: any = {};
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error('Failed to load overview: Invalid server response.');
+      }
       if (!res.ok) throw new Error(json.error || 'Failed to load admin data');
       setData(json);
       if (!adjProductId && json.products?.length > 0) {
@@ -233,7 +239,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           bootstrapToken: bootstrapTokenInput,
         }),
       });
-      const json = await res.json();
+      const text = await res.text();
+      let json: any = {};
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error('Server returned an unreadable response. Please check your credentials and retry.');
+      }
       if (!res.ok) throw new Error(json.error || 'Authentication failed');
       setToken(json.token);
       setAdminUser(json.admin);
