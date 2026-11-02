@@ -139,9 +139,15 @@ export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const isAutostart = urlParams.get('autostart') === '1';
   const initialScreenParam = urlParams.get('screen') as ScreenName | null;
+  const initialPath = window.location.pathname.toLowerCase();
+  const isAdminInitial =
+    initialPath === '/admin' ||
+    initialPath.startsWith('/admin/') ||
+    urlParams.has('admin') ||
+    initialScreenParam === 'admin';
 
   const [screen, setScreen] = useState<ScreenName>(
-    initialScreenParam || 'home'
+    isAdminInitial ? 'admin' : (initialScreenParam || 'home')
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(null);
@@ -333,6 +339,17 @@ export default function App() {
 
   useEffect(() => {
     fetchCatalogue();
+    const handlePopState = () => {
+      const p = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      if (p === '/admin' || p.startsWith('/admin/') || params.has('admin') || params.get('screen') === 'admin') {
+        setScreen('admin');
+      } else if (screen === 'admin') {
+        setScreen('home');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+
     const trackToken = urlParams.get('token') || urlParams.get('track');
     if (trackToken) {
       setScreen('track-order');
@@ -345,6 +362,8 @@ export default function App() {
         })
         .catch(() => {});
     }
+
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
@@ -987,6 +1006,9 @@ export default function App() {
           onBackToStorefront={() => {
             fetchCatalogue();
             setScreen('home');
+            if (window.location.pathname.toLowerCase().startsWith('/admin')) {
+              window.history.pushState(null, '', '/');
+            }
           }}
           onCatalogueUpdated={() => {
             fetchCatalogue();
@@ -1001,14 +1023,6 @@ export default function App() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#fdf2f4] via-[#fffdfb] to-[#f8e5e8] flex flex-col items-center justify-between p-6 text-center select-none">
         <OfflineIndicator />
-        <div className="w-full flex justify-end max-w-md">
-          <button
-            onClick={() => setScreen('admin')}
-            className="text-xs text-[#7c5c63] hover:text-[#9e5461] px-2.5 py-1 rounded-full transition-colors whitespace-nowrap"
-          >
-            Admin Suite
-          </button>
-        </div>
 
         <div className="my-auto max-w-md w-full space-y-6 py-8">
           <div className="w-28 h-28 mx-auto rounded-full bg-white shadow-md border border-[#f0d5da] flex items-center justify-center relative">
@@ -1273,15 +1287,6 @@ export default function App() {
                   {hydratedCart.reduce((s, i) => s + i.quantity, 0)}
                 </span>
               )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setScreen('admin')}
-              data-testid="open-admin-btn"
-              className="px-2 sm:px-2.5 py-1 rounded-lg border border-[#ebd7dc] text-[10px] sm:text-[11px] font-medium text-[#7c5c63] hover:text-[#9e5461] hover:border-[#9e5461] whitespace-nowrap cursor-pointer"
-            >
-              Admin
             </button>
           </div>
         </div>
