@@ -439,7 +439,8 @@ export default function App() {
     };
     window.addEventListener('popstate', handlePopState);
 
-    const trackToken = urlParams.get('token') || urlParams.get('track');
+    const currentUrlParams = new URLSearchParams(window.location.search);
+    const trackToken = currentUrlParams.get('token') || currentUrlParams.get('track');
     if (trackToken) {
       setScreen('track-order');
       fetch(`/api/orders/track/${encodeURIComponent(trackToken)}`)

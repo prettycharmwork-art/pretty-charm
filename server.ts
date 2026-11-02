@@ -95,6 +95,13 @@ import {
 initializeDatabase();
 
 const app = express();
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
 app.use(express.json({ limit: '15mb' }));
 app.use('/uploads', express.static(path.resolve('./public/uploads')));
 
@@ -3530,6 +3537,14 @@ app.post('/api/admin/orders/:id/shipment', requireAdmin, (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
   if (!order) {
     res.status(404).json({ error: 'Order not found' });
+    return;
+  }
+
+  // Enforce Prepaid Only: No shipment can be booked or updated before verified payment
+  if (order.payment_status !== 'paid') {
+    res.status(400).json({
+      error: 'Cannot book or update shipment for an unpaid order. Pretty Charm is strictly prepaid, and payment must be verified before dispatch.',
+    });
     return;
   }
 
