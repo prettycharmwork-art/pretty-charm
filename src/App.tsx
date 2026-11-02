@@ -322,8 +322,15 @@ export default function App() {
     setLoadingCatalogue(true);
     try {
       const res = await fetch('/api/storefront');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load storefront');
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // If server returns non-JSON or HTML, preserve fallback data gracefully
+        return;
+      }
+      if (!res.ok) return;
       if (data.categories && data.categories.length > 0) setCategories(data.categories);
       if (data.products && data.products.length > 0) setProducts(data.products);
       if (data.comboOffers) setComboOffers(data.comboOffers);

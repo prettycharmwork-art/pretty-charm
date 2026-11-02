@@ -189,8 +189,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   useEffect(() => {
     fetch('/api/admin/status')
-      .then((r) => r.json())
-      .then((st) => setBootstrapped(Boolean(st.bootstrapped)))
+      .then((r) => r.text())
+      .then((text) => {
+        try {
+          const st = JSON.parse(text);
+          if (st && typeof st.bootstrapped !== 'undefined') {
+            setBootstrapped(Boolean(st.bootstrapped));
+          }
+        } catch {}
+      })
       .catch(() => {});
   }, []);
 
