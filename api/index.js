@@ -484,6 +484,58 @@ export default async function handler(req, res) {
 
   const url = req.url || '';
 
+  // 0. SITEMAP.XML & ROBOTS.TXT
+  if (url.endsWith('/sitemap.xml') || url.includes('/sitemap.xml')) {
+    const host = req.headers['host'] || 'prettycharm.store';
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const siteUrl = `${proto}://${host}`;
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
+    xml += `  <url><loc>${siteUrl}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n`;
+
+    // Categories
+    for (const c of FALLBACK_CATEGORIES) {
+      xml += `  <url><loc>${siteUrl}/category/${c.slug}</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>\n`;
+    }
+
+    // Active Products
+    for (const p of FALLBACK_PRODUCTS.filter(prod => prod.status === 'active')) {
+      xml += `  <url>\n    <loc>${siteUrl}/product/${p.slug}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n`;
+      if (p.images && p.images[0]) {
+        const imgLoc = p.images[0].startsWith('http') ? p.images[0] : `${siteUrl}${p.images[0]}`;
+        xml += `    <image:image><image:loc>${imgLoc}</image:loc><image:title>${p.name.replace(/&/g, '&amp;')}</image:title></image:image>\n`;
+      }
+      xml += `  </url>\n`;
+    }
+
+    // Informational pages
+    const pages = ['about', 'contact', 'faq', 'shipping-policy', 'return-policy', 'privacy-policy', 'terms'];
+    for (const pg of pages) {
+      xml += `  <url><loc>${siteUrl}/${pg}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n`;
+    }
+
+    xml += `</urlset>`;
+
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    return res.end(xml);
+  }
+
+  if (url.endsWith('/robots.txt') || url.includes('/robots.txt')) {
+    const host = req.headers['host'] || 'prettycharm.store';
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const siteUrl = `${proto}://${host}`;
+
+    const txt = `# Robots.txt for Pretty Charm\nUser-agent: *\nAllow: /\nAllow: /category/\nAllow: /product/\nAllow: /shop\nAllow: /about\nAllow: /contact\nAllow: /faq\nAllow: /shipping-policy\nAllow: /return-policy\nAllow: /privacy-policy\nAllow: /terms\n\nDisallow: /admin\nDisallow: /admin/\nDisallow: /api/\nDisallow: /checkout\nDisallow: /account\nDisallow: /track-order\n\nSitemap: ${siteUrl}/sitemap.xml\n`;
+
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    return res.end(txt);
+  }
+
   // 1. Storefront Endpoint
   if (url.includes('/storefront') || url === '/api' || url === '/api/') {
     return sendJson(res, 200, {

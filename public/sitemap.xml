@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Homepage -->
+  <url>
+    <loc>https://prettycharm.store/</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Categories -->
+  <url>
+    <loc>https://prettycharm.store/category/gift-hampers</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/category/hair-accessories</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/category/jewellery</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/category/cosmetics-beauty</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/category/festive-collection</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Products: Gift Hampers -->
+  <url>
+    <loc>https://prettycharm.store/product/pretty-charm-mini-hamper</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-mini-hamper.jpg</image:loc>
+      <image:title>Pretty Charm Mini Hamper</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/product/pretty-charm-bestie-box</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-bestie-box.jpg</image:loc>
+      <image:title>Pretty Charm Bestie Box</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/product/pretty-charm-premium-box</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-premium-box.jpg</image:loc>
+      <image:title>Pretty Charm Premium Box</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/product/pretty-charm-celebration-box</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-celebration-box.jpg</image:loc>
+      <image:title>Pretty Charm Celebration Box</image:title>
+    </image:image>
+  </url>
+
+  <!-- Products: Hair Accessories -->
+  <url>
+    <loc>https://prettycharm.store/product/rose-gold-pearl-hair-claw</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-pearl-claw.jpg</image:loc>
+      <image:title>Rose Gold Pearl Hair Claw</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/product/mulberry-silk-scrunchie-trio</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-silk-scrunchie-trio.jpg</image:loc>
+      <image:title>Mulberry Silk Scrunchie Trio</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/product/blush-satin-pearl-bow-barrette</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-satin-bow-barrette.jpg</image:loc>
+      <image:title>Blush Satin Pearl Bow Barrette</image:title>
+    </image:image>
+  </url>
+
+  <!-- Products: Jewellery -->
+  <url>
+    <loc>https://prettycharm.store/product/rose-gold-pearl-drop-huggies</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-pearl-drop-huggies.jpg</image:loc>
+      <image:title>Rose Gold Pearl Drop Huggies</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/product/dainty-rose-gold-charm-bracelet</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-charm-bracelet.jpg</image:loc>
+      <image:title>Dainty Rose Gold Charm Bracelet</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/product/blush-quartz-layered-necklace</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://prettycharm.store/uploads/products/prod-quartz-necklace.jpg</image:loc>
+      <image:title>Blush Quartz Layered Necklace</image:title>
+    </image:image>
+  </url>
+
+  <!-- Informational & Policy Pages -->
+  <url>
+    <loc>https://prettycharm.store/about</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/contact</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/faq</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/shipping-policy</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/return-policy</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/privacy-policy</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://prettycharm.store/terms</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>

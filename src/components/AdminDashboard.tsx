@@ -37,6 +37,8 @@ import {
   ALL_INDIAN_STATES_AND_UTS,
 } from '../shared/domainLogic';
 import { ARTWORK } from '../assets/productArtwork';
+import { AdminSeoSettings } from './AdminSeoSettings';
+import { DEFAULT_SEO_SETTINGS } from '../shared/seoConfig';
 
 interface AdminDashboardProps {
   onBackToStorefront: () => void;
@@ -58,7 +60,8 @@ type AdminTab =
   | 'exports'
   | 'integrations'
   | 'settings'
-  | 'audit';
+  | 'audit'
+  | 'seo';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onBackToStorefront,
@@ -1245,6 +1248,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { id: 'integrations', label: '13. WhatsApp & Instagram', icon: MessageCircle },
     { id: 'settings', label: '14. Store Settings', icon: Settings },
     { id: 'audit', label: '15. Admin Users & Audit Log', icon: ShieldCheck },
+    { id: 'seo', label: '16. SEO & Google Visibility', icon: Globe },
   ];
 
   return (
@@ -4451,6 +4455,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
             )}
+
+            {/* 16. SEO & GOOGLE VISIBILITY */}
+            {activeTab === 'seo' && (
+              <AdminSeoSettings
+                products={data.products || []}
+                categories={data.categories || []}
+                seoSettings={data.settings?.seo || DEFAULT_SEO_SETTINGS}
+                onSaveSeoSettings={async (newSeo) => {
+                  try {
+                    const res = await fetch('/api/admin/settings/seo', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify(newSeo),
+                    });
+                    if (res.ok) {
+                      setData((prev: any) => ({
+                        ...prev,
+                        settings: {
+                          ...(prev?.settings || {}),
+                          seo: newSeo,
+                        },
+                      }));
+                      return true;
+                    }
+                    return false;
+                  } catch {
+                    return false;
+                  }
+                }}
+              />
+            )}
+
           </>
         )}
       </main>

@@ -1,0 +1,25 @@
+# Robots.txt for Pretty Charm (E-Commerce Store)
+# Location: Gurugram, Haryana, India
+
+User-agent: *
+Allow: /
+Allow: /category/
+Allow: /product/
+Allow: /shop
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /shipping-policy
+Allow: /return-policy
+Allow: /privacy-policy
+Allow: /terms
+
+# Disallow private and administrative endpoints
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout
+Disallow: /account
+Disallow: /track-order
+
+Sitemap: https://prettycharm.store/sitemap.xml

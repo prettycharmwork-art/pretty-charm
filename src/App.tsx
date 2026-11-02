@@ -71,6 +71,18 @@ import { ThreeHamperViewer } from './components/ThreeHamperViewer';
 import { GeminiStudioModal } from './components/GeminiStudioModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { PremiumHomepage } from './components/PremiumHomepage';
+import { useSeo } from './shared/useSeo';
+import { DEFAULT_SEO_SETTINGS } from './shared/seoConfig';
+import { Breadcrumbs } from './components/Breadcrumbs';
+import { NotFoundPage } from './components/NotFoundPage';
+import {
+  trackViewItem,
+  trackAddToCart,
+  trackBeginCheckout,
+  trackVerifiedPurchase,
+  trackSearch,
+  trackWhatsAppClick,
+} from './shared/analytics';
 
 const INDIAN_STATES_AND_UTS = ALL_INDIAN_STATES_AND_UTS;
 
@@ -135,23 +147,96 @@ interface CartItem {
   quantity: number;
 }
 
-export default function App() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAutostart = urlParams.get('autostart') === '1';
-  const initialScreenParam = urlParams.get('screen') as ScreenName | null;
-  const initialPath = window.location.pathname.toLowerCase();
-  const isAdminInitial =
-    initialPath === '/admin' ||
-    initialPath.startsWith('/admin/') ||
-    urlParams.has('admin') ||
-    initialScreenParam === 'admin';
 
-  const [screen, setScreen] = useState<ScreenName>(
-    isAdminInitial ? 'admin' : (initialScreenParam || 'home')
-  );
+function parseStoreRoute(): { screen: ScreenName; categorySlug: string; productSlug: string | null } {
+  if (typeof window === 'undefined') {
+    return { screen: 'home', categorySlug: 'all', productSlug: null };
+  }
+  const p = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  const params = new URLSearchParams(window.location.search);
+
+  if (p === '/admin' || p.startsWith('/admin/') || params.has('admin') || params.get('screen') === 'admin') {
+    return { screen: 'admin', categorySlug: 'all', productSlug: null };
+  }
+  if (p.startsWith('/product/')) {
+    const slug = p.replace('/product/', '').split('/')[0];
+    return { screen: 'product-details', categorySlug: 'all', productSlug: slug };
+  }
+  if (p.startsWith('/category/')) {
+    const slug = p.replace('/category/', '').split('/')[0];
+    return { screen: 'shop', categorySlug: slug, productSlug: null };
+  }
+  if (p === '/shop' || p === '/categories') {
+    return { screen: 'shop', categorySlug: 'all', productSlug: null };
+  }
+  if (p === '/about') return { screen: 'about', categorySlug: 'all', productSlug: null };
+  if (p === '/contact') return { screen: 'contact', categorySlug: 'all', productSlug: null };
+  if (p === '/faq') return { screen: 'faq', categorySlug: 'all', productSlug: null };
+  if (p === '/shipping-policy') return { screen: 'shipping-policy', categorySlug: 'all', productSlug: null };
+  if (p === '/return-policy') return { screen: 'return-policy', categorySlug: 'all', productSlug: null };
+  if (p === '/privacy-policy') return { screen: 'privacy-policy', categorySlug: 'all', productSlug: null };
+  if (p === '/terms') return { screen: 'terms', categorySlug: 'all', productSlug: null };
+  if (p === '/cart') return { screen: 'cart', categorySlug: 'all', productSlug: null };
+  if (p === '/wishlist') return { screen: 'wishlist', categorySlug: 'all', productSlug: null };
+  if (p === '/checkout') return { screen: 'checkout', categorySlug: 'all', productSlug: null };
+  if (p === '/track-order') return { screen: 'track-order', categorySlug: 'all', productSlug: null };
+  if (p === '/account' || p === '/auth') return { screen: 'account', categorySlug: 'all', productSlug: null };
+  if (p === '/' || p === '') return { screen: 'home', categorySlug: 'all', productSlug: null };
+  return { screen: 'not-found', categorySlug: 'all', productSlug: null };
+}
+
+export default function App() {
+    const initialRoute = useMemo(() => parseStoreRoute(), []);
+
+  const [screen, setScreenState] = useState<ScreenName>(initialRoute.screen);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-  const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(null);
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('all');
+  const [selectedProductSlug, setSelectedProductSlug] = useState<string | null>(initialRoute.productSlug);
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>(initialRoute.categorySlug);
+
+  const goToScreen = (
+    nextScreen: ScreenName,
+    options?: { categorySlug?: string; productSlug?: string; replace?: boolean }
+  ) => {
+    const nextCat = options?.categorySlug !== undefined ? options.categorySlug : selectedCategorySlug;
+    const nextProd = options?.productSlug !== undefined ? options.productSlug : selectedProductSlug;
+
+    setScreenState(nextScreen);
+    if (options?.categorySlug !== undefined) setSelectedCategorySlug(options.categorySlug);
+    if (options?.productSlug !== undefined) setSelectedProductSlug(options.productSlug);
+
+    if (typeof window !== 'undefined') {
+      let url = '/';
+      if (nextScreen === 'home' || nextScreen === 'splash') url = '/';
+      else if (nextScreen === 'product-details' && nextProd) url = `/product/${nextProd}`;
+      else if (nextScreen === 'shop' && nextCat && nextCat !== 'all') url = `/category/${nextCat}`;
+      else if (nextScreen === 'shop' || nextScreen === 'categories') url = '/shop';
+      else if (nextScreen === 'about') url = '/about';
+      else if (nextScreen === 'contact') url = '/contact';
+      else if (nextScreen === 'faq') url = '/faq';
+      else if (nextScreen === 'shipping-policy') url = '/shipping-policy';
+      else if (nextScreen === 'return-policy') url = '/return-policy';
+      else if (nextScreen === 'privacy-policy') url = '/privacy-policy';
+      else if (nextScreen === 'terms') url = '/terms';
+      else if (nextScreen === 'cart') url = '/cart';
+      else if (nextScreen === 'wishlist') url = '/wishlist';
+      else if (nextScreen === 'checkout') url = '/checkout';
+      else if (nextScreen === 'track-order') url = '/track-order';
+      else if (nextScreen === 'account' || nextScreen === 'auth') url = '/account';
+      else if (nextScreen === 'admin') url = '/admin';
+      else if (nextScreen === 'not-found') url = '/404';
+
+      if (options?.replace) {
+        window.history.replaceState(null, '', url);
+      } else {
+        window.history.pushState(null, '', url);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const setScreen = (s: ScreenName) => {
+    goToScreen(s);
+  };
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<ProductSortOption>('featured');
   const [showInStockOnly, setShowInStockOnly] = useState<boolean>(false);
@@ -346,14 +431,11 @@ export default function App() {
 
   useEffect(() => {
     fetchCatalogue();
-    const handlePopState = () => {
-      const p = window.location.pathname.toLowerCase();
-      const params = new URLSearchParams(window.location.search);
-      if (p === '/admin' || p.startsWith('/admin/') || params.has('admin') || params.get('screen') === 'admin') {
-        setScreen('admin');
-      } else if (screen === 'admin') {
-        setScreen('home');
-      }
+        const handlePopState = () => {
+      const parsed = parseStoreRoute();
+      setScreenState(parsed.screen);
+      if (parsed.categorySlug) setSelectedCategorySlug(parsed.categorySlug);
+      if (parsed.productSlug) setSelectedProductSlug(parsed.productSlug);
     };
     window.addEventListener('popstate', handlePopState);
 
@@ -634,6 +716,52 @@ export default function App() {
     () => products.find((p) => p.slug === selectedProductSlug) || null,
     [products, selectedProductSlug]
   );
+
+  const currentCategory = useMemo(
+    () => categories.find((c) => c.slug === selectedCategorySlug) || null,
+    [categories, selectedCategorySlug]
+  );
+
+  const productBreadcrumbs = useMemo(() => {
+    if (!currentProduct) return [];
+    return [
+      { name: 'Home', path: '/', onClick: () => goToScreen('home') },
+      {
+        name: categoryNameMap.get(currentProduct.categorySlug) || currentProduct.categorySlug,
+        path: `/category/${currentProduct.categorySlug}`,
+        onClick: () => goToScreen('shop', { categorySlug: currentProduct.categorySlug }),
+      },
+      { name: currentProduct.name, path: `/product/${currentProduct.slug}` },
+    ];
+  }, [currentProduct, categoryNameMap]);
+
+  const categoryBreadcrumbs = useMemo(() => {
+    return [
+      { name: 'Home', path: '/', onClick: () => goToScreen('home') },
+      {
+        name: currentCategory ? currentCategory.name : 'All Collections',
+        path: currentCategory ? `/category/${currentCategory.slug}` : '/shop',
+      },
+    ];
+  }, [currentCategory]);
+
+  const relatedProducts = useMemo(() => {
+    if (!currentProduct) return [];
+    return products
+      .filter((p) => p.id !== currentProduct.id && (p.categorySlug === currentProduct.categorySlug || p.featured))
+      .slice(0, 4);
+  }, [currentProduct, products]);
+
+  useSeo({
+    screen,
+    seoSettings: generalSettings.seo || DEFAULT_SEO_SETTINGS,
+    product: currentProduct,
+    category: currentCategory,
+    categoryProducts: filteredProducts,
+    breadcrumbs: screen === 'product-details' ? productBreadcrumbs : categoryBreadcrumbs,
+    isNotFound: screen === 'not-found',
+  });
+
 
   const handleCheckPinServiceability = async () => {
     if (!validateIndianPinCodeFormat(pinCheckInput)) {
@@ -1558,6 +1686,7 @@ export default function App() {
         {/* SCREEN 5: PRODUCT LISTING AND FILTERING (CATEGORY PAGE) */}
         {screen === 'shop' && (
           <div className="space-y-6">
+            <Breadcrumbs items={categoryBreadcrumbs} />
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#f0d5da] pb-5">
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-[#9e5461] font-semibold">
@@ -1727,6 +1856,7 @@ export default function App() {
         {/* SCREEN 6: PRODUCT DETAILS */}
         {screen === 'product-details' && currentProduct && (
           <div className="space-y-8">
+            <Breadcrumbs items={productBreadcrumbs} />
             <button
               onClick={() => setScreen('shop')}
               className="text-xs text-[#7c5c63] hover:text-[#9e5461] flex items-center gap-1"
@@ -2148,6 +2278,43 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            
+            {/* Related Products / You May Also Like */}
+            {relatedProducts.length > 0 && (
+              <div className="space-y-4 pt-6 border-t border-[#f0d5da]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#9e5461]">
+                      Curated Pairings
+                    </p>
+                    <h3 className="font-serif text-2xl font-semibold text-[#2d1e21]">
+                      You May Also Like
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => goToScreen('shop', { categorySlug: currentProduct.categorySlug })}
+                    className="text-xs text-[#9e5461] hover:underline font-medium cursor-pointer"
+                  >
+                    View All in {categoryNameMap.get(currentProduct.categorySlug) || 'Category'} &rarr;
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {relatedProducts.map((rp) => (
+                    <ProductCard
+                      key={rp.id}
+                      product={rp}
+                      categoryName={categoryNameMap.get(rp.categorySlug) || rp.categorySlug}
+                      isWishlisted={wishlist.includes(rp.id)}
+                      onToggleWishlist={() => toggleWishlist(rp.id)}
+                      onSelect={() => navigateToProduct(rp)}
+                      onAddToCart={() => handleAddToCart(rp, 1, rp.variants?.[0]?.id || null)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Recently Viewed Products Section */}
             {recentlyViewed.filter((id) => id !== currentProduct.id).length > 0 && (
@@ -4145,20 +4312,14 @@ export default function App() {
 
         {/* SCREEN 23: CUSTOM 404 PAGE */}
         {screen === 'not-found' && (
-          <div className="max-w-md mx-auto text-center py-16 space-y-4">
-            <h1 className="font-serif text-4xl text-[#2d1e21] font-semibold">
-              Page Not Found
-            </h1>
-            <p className="text-xs text-[#7c5c63]">
-              The page or product you requested could not be found in the Pretty Charm store.
-            </p>
-            <button
-              onClick={() => setScreen('home')}
-              className="px-5 py-2.5 rounded-full bg-[#9e5461] text-white text-xs font-medium"
-            >
-              Back to Home
-            </button>
-          </div>
+          <NotFoundPage
+            onGoHome={() => goToScreen('home')}
+            onGoCategory={(slug) => goToScreen('shop', { categorySlug: slug })}
+            onSearch={(q) => {
+              setSearchQuery(q);
+              goToScreen('shop');
+            }}
+          />
         )}
       </main>
 
@@ -4394,7 +4555,11 @@ function ProductCard({
         <div className="relative aspect-4/3 bg-[#fdf2f4] overflow-hidden">
           <img
             src={product.images?.[0] || ARTWORK.heroBanner}
-            alt={product.name}
+            alt={`${product.name} - Pretty Charm ${categoryName}`}
+            loading="lazy"
+            decoding="async"
+            width="400"
+            height="300"
             referrerPolicy="no-referrer"
             data-testid={`product-card-img-${product.slug}`}
             onClick={onSelect}
